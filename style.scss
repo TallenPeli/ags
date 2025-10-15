@@ -7,7 +7,7 @@ $base-color: #{"@theme_base_color"};
 $surface-color: #{"@theme_surface_color"};
 
 $border-radius: 20px;
-$margin: 4px;
+$margin: 2px;
 $padding: 2px;
 
 window.Bar {
@@ -17,13 +17,13 @@ window.Bar {
 
   button {
     border-radius: 20px;
-    margin: 4px;
+    margin: $margin;
   }
 }
 
 .workspaces {
   border-radius: 20px;
-  margin: 4px;
+  margin: $margin;
 
   background-color: $bg-color;
 }
@@ -43,18 +43,22 @@ window.Bar {
 }
 
 .menu-button {
-  padding: $padding;
-  border-radius: 8px;
-  background: black; 
+  border-radius: $border-radius;
+  background-color: black;
   color: $fg-color;
 }
 
-.menu-button grid{
-  padding: $padding;
-  margin: $margin;
+.menu-button button {
+  background-color: black;
   border-radius: $border-radius;
-  spacing: $margin;
-  color: $fg-color;
+}
+
+.menu-button:hover button {
+  background-color: $bg-color;
+}
+
+.menu-button box {
+  background-color: transparent;
 }
 
 .menu-button image {

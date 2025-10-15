@@ -3,7 +3,7 @@ import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { exec, execAsync } from "ags/process"
 import { createPoll } from "ags/time"
 import AstalHyprland from "gi://AstalHyprland?version=0.1"
-import MenuButton from "./modules/MenuButton"
+import QuickSettingsToggle from "./modules/QuickSettingsToggle"
 
 function Workspaces() {
   const hypr = AstalHyprland.get_default()
@@ -48,7 +48,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
             <Gtk.Calendar />
           </popover>
         </menubutton>
-        <MenuButton />
+        <QuickSettingsToggle/>
       </centerbox>
 
     </window>
