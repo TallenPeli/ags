@@ -1,0 +1,63 @@
+// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
+$fg-color: #{"@theme_fg_color"};
+$bg-color: #{"@theme_bg_color"};
+$text-color: #{"@theme_text_color"};
+$base-color: #{"@theme_base_color"};
+
+$surface-color: #{"@theme_surface_color"};
+
+$border-radius: 20px;
+$margin: 4px;
+$padding: 2px;
+
+window.Bar {
+  background: black;
+  color: $fg-color;
+  font-weight: bold;
+
+  button {
+    border-radius: 20px;
+    margin: 4px;
+  }
+}
+
+.workspaces {
+  border-radius: 20px;
+  margin: 4px;
+
+  background-color: $bg-color;
+}
+
+.workspace-button {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 2px;
+  border-radius: 8px;
+  background: black; 
+  color: $fg-color;
+}
+
+.workspace-button.active {
+  background: $surface-color;
+  font-weight: bold;
+}
+
+.menu-button {
+  padding: $padding;
+  border-radius: 8px;
+  background: black; 
+  color: $fg-color;
+}
+
+.menu-button grid{
+  padding: $padding;
+  margin: $margin;
+  border-radius: $border-radius;
+  spacing: $margin;
+  color: $fg-color;
+}
+
+.menu-button image {
+  padding-left: $margin;
+  padding-right: $margin;
+}
