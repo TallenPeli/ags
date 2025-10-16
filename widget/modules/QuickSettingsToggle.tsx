@@ -1,6 +1,7 @@
 import { Astal, Gtk } from "ags/gtk4";
 import { exec, execAsync } from "ags/process"
 import { createPoll } from "ags/time";
+import AstalWp from "gi://AstalWp?version=0.1";
 
 const _spacing = 4;
 
@@ -32,8 +33,18 @@ function MicrophoneIndicator() {
     1000,
     async() => {
       try {
-        const status = await execAsync("pactl list source-outputs");
-        return status.includes("Source") ? "audio-input-microphone-symbolic" : "";
+        const sourceOutputs = await execAsync("pactl list source-outputs");
+        const isInUse = sourceOutputs.includes("Source");
+
+        if (!isInUse) {
+          return "";
+        }
+
+        const sourceInfo = await execAsync("pactl get-source-mute @DEFAULT_SOURCE@");
+        const isMuted = sourceInfo.includes("yes");
+
+        return isMuted ? "microphone-disabled-symbolic" : "audio-input-microphone-symbolic";
+
       } catch (error) {
         print(`Error getting microphone status: ${error}`);
         return "";
@@ -147,15 +158,52 @@ function NetworkIndicator() {
   );
 }
 
+function AudioIndicator() {
+  const audioIcon = createPoll(
+    "audio-card-symbolic",
+    1000,
+    () => {
+      const defaultSpeaker = AstalWp.get_default().get_default_speaker();
+      if (defaultSpeaker === null) {
+        return ""; 
+      }
+
+      if (defaultSpeaker.get_icon().includes("headset")) {
+        return "audio-headset-symbolic";
+      }
+
+      return defaultSpeaker.get_icon();
+    }
+  );
+
+  const isVisible = createPoll (
+    false,
+    1000,
+    () => {
+      const defaultSpeaker = AstalWp.get_default().get_default_speaker();
+      if (defaultSpeaker === null) {
+        return false;
+      }
+      return true;
+    }
+  );
+
+  return (
+    <Gtk.Image
+      iconName={audioIcon}
+      visible={isVisible}
+    />
+  );
+}
+
 function QuickSettingsToggle() {
-
-
   return (
     <menubutton class="menu-button" $type="end" halign={Gtk.Align.CENTER}>
       <box halign={Gtk.Align.CENTER} spacing={_spacing}>
         <MicrophoneIndicator />
-        <BluetoothIndicator />
         <NetworkIndicator />
+        <BluetoothIndicator />
+        <AudioIndicator />
         <Gtk.Image $type="end" iconName="system-shutdown-symbolic" valign={Gtk.Align.CENTER}/>
       </box>
       <popover>
