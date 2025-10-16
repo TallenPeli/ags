@@ -3,6 +3,7 @@ $fg-color: #{"@theme_fg_color"};
 $bg-color: #{"@theme_bg_color"};
 $text-color: #{"@theme_text_color"};
 $base-color: #{"@theme_base_color"};
+$warning-color: #{"@warning_color"};
 
 $surface-color: #{"@theme_surface_color"};
 
@@ -64,4 +65,8 @@ window.Bar {
 .menu-button image {
   padding-left: $margin;
   padding-right: $margin;
+}
+
+.microphone-indicator {
+  color: $warning-color;
 }

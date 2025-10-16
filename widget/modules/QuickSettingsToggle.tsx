@@ -22,66 +22,131 @@ async function getWifiStrengthIcon(): Promise<string> {
     return "network-wireless-signal-none-symbolic";
   } catch (e) {
     console.error("Failed to get wifi strength: ", e);
-    return "network-wireless-symbolic";
+    return "network-wireless-offline-symbolic";
   }
 }
 
-async function getNetworkIcon(status: string) {
-  if (status.includes("wifi      connected")) {
-    return getWifiStrengthIcon();
-  } else if (status.includes("ethernet  connected")) {
-    return "network-wired-symbolic"
-  }
-
-  return "network-disconnect-symbolic"
-}
-
-function QuickSettingsToggle() {
-  const networkIcon = createPoll(
-    "network-wireless-acquiring-symbolic",
+function MicrophoneIndicator() {
+  const microphoneIcon = createPoll(
+    "",
     1000,
-    () => {
-      const status = exec("nmcli device status");;
-      return getNetworkIcon(status);
-    }
-  );
-
-  const bluetoothIcon = createPoll(
-    "bluetooth-active-symbolic",
-    1000,
-    () => {
-      const status = exec("bluetoothctl show");
-      const connectedToDevice = exec("sh -c 'sh $HOME/.config/ags/scripts/check_bluetooth.sh'");
-
-      if (status.includes("Discovering: yes")) {
-        return "bluetooth-acquiring-symbolic";
-      } else if (status.includes("Powered: yes")) {
-        if (connectedToDevice === "true") {
-          return "bluetooth-active-symbolic";
-        } else {
-          return "bluetooth-disconnected-symbolic";
-        }
-      } else {
-        return "bluetooth-disabled-symbolic";
+    async() => {
+      try {
+        const status = await execAsync("pactl list source-outputs");
+        return status.includes("Source") ? "audio-input-microphone-symbolic" : "";
+      } catch (error) {
+        print(`Error getting microphone status: ${error}`);
+        return "";
       }
     }
   );
 
-  const microphoneIcon = createPoll(
-    "audio-input-microphone-symbolic",
+  return (
+    <Gtk.Image
+      iconName={microphoneIcon}
+      visible={microphoneIcon.as(icon => icon !== "")}
+      class="microphone-indicator"
+    />
+  );
+}
+
+function BluetoothIndicator() {
+  const bluetoothIcon = createPoll(
+    "bluetooth-active-symbolic",
     1000,
-    () => {
-      const status = exec("pactl list source-outputs");
-      return status.includes("Source") ? "audio-input-microphone-symbolic" : "";
+    async() => {
+      try {
+        const status = await execAsync("bluetoothctl show");
+        const connectedToDevice = exec("sh -c 'sh $HOME/.config/ags/scripts/check_bluetooth.sh'");
+
+        if (status.includes("Discovering: yes")) {
+          return "bluetooth-acquiring-symbolic";
+        } else if (status.includes("Powered: yes")) {
+          if (connectedToDevice === "true") {
+            return "bluetooth-active-symbolic";
+          }
+        }
+        return "";
+      } catch (error) {
+        print(`Error getting bluetooth status: ${error}`);
+        return "";
+      }
     }
   );
 
   return (
+    <Gtk.Image
+      iconName={bluetoothIcon}
+      visible={bluetoothIcon.as(icon => icon !== "")}
+    />
+  );
+}
+
+function NetworkIndicator() {
+  const networkIcon = createPoll(
+    { icon: "network-wireless-acquiring-symbolic", device: "" },
+    1000,
+    async () => {
+      try {
+        const status = await execAsync("nmcli -t -f DEVICE,TYPE,STATE device");
+        const lines = status.split("\n");
+
+        // Check for VPN connections
+        for (const line of lines) {
+          const [device, type, state] = line.split(":");
+
+          if (state === "connected") {
+            if (type === "tun" || type === "vpn" || type === "wireguard") {
+              return { icon: "network-vpn-symbolic", device };
+            }
+          }
+        }
+
+        // Check for other connections
+        for (const line of lines) {
+          const [device, type, state] = line.split(":");
+
+          if (state === "connected") {
+            if (type === "ethernet") {
+              return { icon: "network-wired-symbolic", device };
+            } else if (type === "wifi") {
+              return { icon: await getWifiStrengthIcon(), device };
+            }
+          } else if (state === "disconnected") {
+            if (type === "ethernet") {
+              return { icon: "network-wired-offline-symbolic", device };
+            } else if (type === "wifi") {
+              return { icon: "network-wireless-offline-symbolic", device };
+            }
+          }
+        }
+
+        return { icon: "", device: "" };
+      } catch (error) {
+        print(`Error getting network status: ${error}`);
+        return { icon: "", device: "" };
+      }
+    }
+  );
+
+  return (
+    <Gtk.Image
+      iconName={networkIcon.as(n => n.icon)}
+      tooltipText={networkIcon.as(n => n.device)}
+      visible={networkIcon.as(n => n.icon !== "")}
+    />
+  );
+}
+
+function QuickSettingsToggle() {
+
+
+  return (
     <menubutton class="menu-button" $type="end" halign={Gtk.Align.CENTER}>
       <box halign={Gtk.Align.CENTER} spacing={_spacing}>
-        <Gtk.Image $type="end" iconName={microphoneIcon} valign={Gtk.Align.CENTER}/>
-        <Gtk.Image $type="end" iconName={bluetoothIcon} valign={Gtk.Align.CENTER}/>
-        <Gtk.Image $type="end" iconName={networkIcon} valign={Gtk.Align.CENTER}/>
+        <MicrophoneIndicator />
+        <BluetoothIndicator />
+        <NetworkIndicator />
         <Gtk.Image $type="end" iconName="system-shutdown-symbolic" valign={Gtk.Align.CENTER}/>
       </box>
       <popover>
