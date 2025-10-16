@@ -20,8 +20,8 @@ async function getWifiStrengthIcon(): Promise<string> {
     if (percent >= 30) return "network-wireless-signal-weak-symbolic";
 
     return "network-wireless-signal-none-symbolic";
-  } catch (e) {
-    console.error("Failed to get wifi strength: ", e);
+  } catch (error) {
+    console.error("Failed to get wifi strength: ", error);
     return "network-wireless-offline-symbolic";
   }
 }
@@ -95,29 +95,38 @@ function NetworkIndicator() {
         for (const line of lines) {
           const [device, type, state] = line.split(":");
 
-          if (state === "connected") {
-            if (type === "tun" || type === "vpn" || type === "wireguard") {
+          if (state === "connected" && (type === "tun" || type === "vpn" || type === "wireguard")) {
               return { icon: "network-vpn-symbolic", device };
+          }
+        }
+
+        // Check ethernet
+        for (const line of lines) {
+          const [device, type, state] = line.split(":");
+          if (type === "ethernet") {
+            if (state === "connected") {
+              return { icon: "network-wired-symbolic", device };
             }
           }
         }
 
-        // Check for other connections
+        // Then check for wifi
         for (const line of lines) {
           const [device, type, state] = line.split(":");
-
-          if (state === "connected") {
-            if (type === "ethernet") {
-              return { icon: "network-wired-symbolic", device };
-            } else if (type === "wifi") {
+          if (type === "wifi") {
+            if (state === "connected") {
               return { icon: await getWifiStrengthIcon(), device };
-            }
-          } else if (state === "disconnected") {
-            if (type === "ethernet") {
-              return { icon: "network-wired-offline-symbolic", device };
-            } else if (type === "wifi") {
+            } else {
               return { icon: "network-wireless-offline-symbolic", device };
             }
+          }
+        }
+
+        // Final fallback if you have no wifi device, but you have an ethernet device
+        for (const line of lines) {
+          const [device, type, state] = line.split(":");
+          if (type === "ethernet" && state === "disconnected") {
+            return { icon: "network-wired-offline-symbolic", device };
           }
         }
 
